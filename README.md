@@ -1,4 +1,4 @@
-# GitHub Vault Sync — Obsidian Plugin
+# Git Sync
 
 > Sync your Obsidian vault across every device using your own **free private GitHub repo**.  
 > No subscription. No cloud fees. Works on desktop (Windows / macOS / Linux) and mobile (iOS / Android).
