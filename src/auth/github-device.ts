@@ -52,18 +52,35 @@ export async function pollForToken(
 
       onPollStart?.();
 
-      const response = await requestUrl({
-        url: GITHUB_TOKEN_URL,
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `client_id=${CLIENT_ID}&device_code=${deviceCode}&grant_type=urn:ietf:params:oauth:grant-type:device_code`,
-        throw: false,
-      });
+      let data: Record<string, string>;
+      try {
+        const response = await requestUrl({
+          url: GITHUB_TOKEN_URL,
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `client_id=${CLIENT_ID}&device_code=${deviceCode}&grant_type=urn:ietf:params:oauth:grant-type:device_code`,
+          throw: false,
+        });
+        data = response.json as Record<string, string>;
+      } catch {
+        // requestUrl throws on network trouble (no connection, DNS failure, the
+        // app suspended in the background) even with throw: false, which only
+        // covers HTTP error statuses. That throw used to escape poll() and the
+        // promise never settled, so the pane sat on "Waiting for you to approve
+        // in the browser..." even though GitHub had approved the code. Retry on
+        // the next tick; the deadline check above ends the flow either way.
+        setTimeout(poll, currentInterval);
+        return;
+      }
 
-      const data = response.json as Record<string, string>;
+      if (!data) {
+        // Couldn't read the response. Same story, try again.
+        setTimeout(poll, currentInterval);
+        return;
+      }
 
       if (data.access_token) {
         resolve(data.access_token);
