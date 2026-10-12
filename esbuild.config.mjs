@@ -4,6 +4,13 @@ import { builtinModules } from "module";
 
 const prod = process.argv[2] === "production";
 
+// Electron on desktop provides the Node builtins, so they stay external.
+// Mobile has no Node runtime at all, so `buffer` has to be bundled from the
+// npm polyfill and injected as a global. See src/buffer-shim.ts.
+const externalBuiltins = builtinModules.filter(
+  (mod) => mod !== "buffer" && mod !== "node:buffer"
+);
+
 esbuild.build({
   banner: { js: "/* obsidian-multisync */" },
   entryPoints: ["src/main.ts"],
@@ -22,8 +29,9 @@ esbuild.build({
     "@lezer/common",
     "@lezer/highlight",
     "@lezer/lr",
-    ...builtinModules,
+    ...externalBuiltins,
   ],
+  inject: ["src/buffer-shim.ts"],
   format: "cjs",
   target: "es2018",
   logLevel: "info",
