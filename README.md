@@ -372,7 +372,7 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 - Ensure your mobile device has an internet connection.
 - The plugin uses Obsidian's built-in HTTP layer so it does not need special mobile permissions.
 - If syncing fails on mobile, try disconnecting and reconnecting your GitHub account.
-- "Failed to load plugin" on iOS/Android means you have a build from before the Buffer fix — update to **1.0.2** or later.
+- "Failed to load plugin" on iOS/Android means you have a build from before the Buffer fix — update to **1.0.3** or later.
 - Install from the **latest GitHub release** (`main.js` + `manifest.json`). If the plugin reports an older version than the release, delete the plugin folder and reinstall.
 
 ### `.git` folder visible in vault
