@@ -21,8 +21,18 @@ jobs:
         with:
           node-version: "18.x"
 
+      - name: Verify tag matches manifest version
+        # Guards against the 1.0.1 release shipping a manifest that still said 1.0.0 (issue #11).
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          if [ "$GITHUB_REF_NAME" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest.json version $MANIFEST_VERSION"
+            exit 1
+          fi
+          node -e "const v=require('./versions.json'),m=require('./manifest.json');if(v[m.version]!==m.minAppVersion){console.error('versions.json must map '+m.version+' to '+m.minAppVersion);process.exit(1)}"
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build plugin
         run: npm run build

@@ -52,18 +52,27 @@ export async function pollForToken(
 
       onPollStart?.();
 
-      const response = await requestUrl({
-        url: GITHUB_TOKEN_URL,
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `client_id=${CLIENT_ID}&device_code=${deviceCode}&grant_type=urn:ietf:params:oauth:grant-type:device_code`,
-        throw: false,
-      });
-
-      const data = response.json as Record<string, string>;
+      let data: Record<string, string>;
+      try {
+        const response = await requestUrl({
+          url: GITHUB_TOKEN_URL,
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `client_id=${CLIENT_ID}&device_code=${deviceCode}&grant_type=urn:ietf:params:oauth:grant-type:device_code`,
+          throw: false,
+        });
+        data = response.json as Record<string, string>;
+      } catch {
+        // requestUrl can throw on transport errors (offline, DNS failure, or the
+        // OS cutting a backgrounded mobile app's network). Treat it as a
+        // transient miss and retry on the next tick; the deadline above still
+        // bounds the total wait, so this cannot loop forever.
+        setTimeout(poll, currentInterval);
+        return;
+      }
 
       if (data.access_token) {
         resolve(data.access_token);

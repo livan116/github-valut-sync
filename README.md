@@ -99,6 +99,8 @@ This is done **once** — the `client_id` is then baked into the plugin code.
    CLIENT_ID=Ov23liYOUR_ACTUAL_ID
    ```
 
+   The build reads `CLIENT_ID` from `.env` (or a real environment variable / CI secret, which wins) and bakes it into `main.js`. If it is missing, the build prints a warning and falls back to the original author's public Client ID — **set your own if you are distributing a fork.**
+
 > **Do not** generate a Client Secret — Device Flow doesn't need it and secrets must never be embedded in plugin code.
 
 ### 1.4 — Build the Plugin
@@ -120,6 +122,7 @@ Both commands output a single `main.js` file in the project root.
 ```
 github-valut-sync/
 ├── src/
+│   ├── buffer-shim.ts            # Installs global Buffer on mobile (no Node.js there)
 │   ├── main.ts                   # Plugin entry point — wires everything together
 │   ├── types.ts                  # All TypeScript interfaces & types
 │   ├── constants.ts              # App-wide constants (CLIENT_ID injected here at build)
@@ -297,7 +300,9 @@ When the plugin detects a conflict, a modal appears automatically:
 | **Keep Theirs** | Use the remote version, discard local changes |
 | **Open in Editor** | Close modal, open the file — edit it manually, then sync again |
 
-After resolving, the file is immediately committed and pushed.
+Until every conflicted file is resolved, nothing is pushed and auto-sync stays paused (the status bar shows `⚠ Conflict`; click it to reopen the modal — the pending conflict survives an Obsidian restart). Once the last file is resolved, the merge is committed and pushed.
+
+> While a conflict is pending, the vault copy of a conflicted file contains Git conflict markers (`<<<<<<<`). Resolve through the modal rather than syncing by hand.
 
 ---
 
@@ -367,6 +372,8 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 - Ensure your mobile device has an internet connection.
 - The plugin uses Obsidian's built-in HTTP layer so it does not need special mobile permissions.
 - If syncing fails on mobile, try disconnecting and reconnecting your GitHub account.
+- "Failed to load plugin" on iOS/Android means you have a build from before the Buffer fix — update to **1.0.2** or later.
+- Install from the **latest GitHub release** (`main.js` + `manifest.json`). If the plugin reports an older version than the release, delete the plugin folder and reinstall.
 
 ### `.git` folder visible in vault
 The `.git` folder is hidden in Obsidian by default. If you see it, go to  
@@ -432,6 +439,8 @@ A: The `repo` scope is the minimum required to create and push to **private** re
 **Key constraints:**
 - Never use `require('fs')` — always use the `fs-adapter` so mobile works.
 - Always pull before push — enforced in `git-sync.ts::sync()`.
+- Never rely on a Node global (`Buffer`, `process`) at runtime — mobile has none. `Buffer` is polyfilled by `src/buffer-shim.ts` (keep it the first import in `main.ts`); `process.env.CLIENT_ID` is replaced at build time by esbuild.
+- Release by tagging exactly the `manifest.json` version (no `v` prefix) and adding it to `versions.json`; the release workflow rejects mismatches.
 - Always use `requestUrl` from obsidian for HTTP — never `fetch` or `axios`.
 - Never store the GitHub token anywhere other than `this.saveData()`.
 

@@ -1,4 +1,6 @@
-import { Plugin, Notice, TFile, TAbstractFile } from "obsidian";
+// MUST stay first: defines the global Buffer on mobile before anything else loads.
+import "./buffer-shim";
+import { Plugin, Notice, TFile, TFolder, TAbstractFile } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS, SyncStatus, ConflictFile } from "./types";
 import { MultiSyncSettingsTab } from "./ui/settings-tab";
 import { StatusBarItem } from "./ui/status-bar";
@@ -42,11 +44,18 @@ export default class MultiSyncPlugin extends Plugin {
       if (this.gitSync) {
         this.setStatus("pulling");
         try {
-          await this.gitSync.pull();
-          this.setStatus("idle");
-        } catch {
+          const conflicts = await this.gitSync.pull();
+          if (conflicts.length > 0) {
+            this.setStatus("conflict");
+            this.showConflictModal(conflicts);
+          } else {
+            this.setStatus("idle");
+          }
+        } catch (err) {
           // Pull errors on open are non-fatal (e.g. offline) — just show error state
+          const msg = err instanceof Error ? err.message : String(err);
           this.setStatus("error", "Pull failed on open");
+          console.error("Git Sync: pull on open failed:", msg);
         }
       }
     });
@@ -72,16 +81,29 @@ export default class MultiSyncPlugin extends Plugin {
 
     this.registerEvent(
       this.app.vault.on("delete", (file: TAbstractFile) => {
-        if (!(file instanceof TFile)) return;
+        // Folders too: deleting a folder must trigger a sync so every file
+        // under it is removed from the repo (sync reconciles against the index).
         if (!this.syncQueue || !this.settings.autoSync) return;
         this.syncQueue.enqueue(file.path);
       })
     );
 
     this.registerEvent(
-      this.app.vault.on("rename", (_file: TAbstractFile, oldPath: string) => {
+      this.app.vault.on("rename", (file: TAbstractFile, oldPath: string) => {
         if (!this.syncQueue || !this.settings.autoSync) return;
+        // Old path disappeared (stages as a deletion) ...
         this.syncQueue.enqueue(oldPath);
+        // ... and the new path(s) must be added, or the rename only deletes.
+        if (file instanceof TFile) {
+          if (!this.isExcluded(file.path)) this.syncQueue.enqueue(file.path);
+        } else if (file instanceof TFolder) {
+          const prefix = file.path + "/";
+          for (const f of this.app.vault.getFiles()) {
+            if (f.path.startsWith(prefix) && !this.isExcluded(f.path)) {
+              this.syncQueue.enqueue(f.path);
+            }
+          }
+        }
       })
     );
   }
@@ -230,10 +252,18 @@ export default class MultiSyncPlugin extends Plugin {
       this.app,
       conflicts,
       async (filepath, resolved) => {
-        await this.gitSync!.resolveConflict(filepath, resolved);
-        this.settings.lastSyncTime = Date.now();
-        await this.saveSettings();
-        this.setStatus("idle");
+        try {
+          const remaining = await this.gitSync!.resolveConflict(filepath, resolved);
+          if (remaining === 0) {
+            this.settings.lastSyncTime = Date.now();
+            await this.saveSettings();
+            this.setStatus("idle");
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.setStatus("error", msg);
+          new Notice(`Could not resolve conflict: ${msg}`);
+        }
       }
     ).open();
   }
