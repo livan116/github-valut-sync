@@ -29,6 +29,13 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
     if (normalized.startsWith(base + "/")) {
       return normalized.slice(base.length + 1);
     }
+    // The vault root itself. Without this the absolute path leaked through to
+    // adapter.list(), the working-tree scan came back empty, and isomorphic-git
+    // saw every file as missing (so deletions pulled from the remote never
+    // reached the vault and statusMatrix always looked dirty).
+    if (normalized === base || normalized === "." || normalized === "") {
+      return "";
+    }
     return normalized;
   }
 
@@ -98,7 +105,9 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
 
     async stat(path: string): Promise<Stats> {
       try {
-        const s = await adapter.stat(rel(path));
+        const relPath = rel(path);
+        // Adapter has no stat for the vault root; it is always a directory.
+        const s = relPath === "" ? { type: "folder", size: 0, mtime: Date.now(), ctime: Date.now() } : await adapter.stat(relPath);
         if (!s) throw new Error("no stat");
         const isDir = s.type !== "file";
         return {
