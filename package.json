@@ -1,6 +1,6 @@
 {
   "name": "obsidian-multisync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Sync Obsidian vaults across devices via GitHub",
   "main": "main.js",
   "scripts": {
