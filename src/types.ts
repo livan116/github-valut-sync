@@ -15,14 +15,23 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   repoName: "",
   autoSync: true,
   syncIntervalMs: 3000,
-  excludePatterns: [
-    ".obsidian/workspace",
-    ".obsidian/workspace.json",
-    ".obsidian/plugins/*/data.json",
-  ],
+  excludePatterns: [], // filled from defaultExcludePatterns(configDir) in loadSettings
   lastSyncTime: 0,
   commitMessageTemplate: "sync: {{datetime}}",
 };
+
+/**
+ * Default exclusions. The config folder is user-configurable in Obsidian, so it is
+ * passed in (Vault#configDir) rather than hard-coded. The data.json pattern keeps
+ * the stored GitHub token out of the repo — do not remove it.
+ */
+export function defaultExcludePatterns(configDir: string): string[] {
+  return [
+    `${configDir}/workspace`,
+    `${configDir}/workspace.json`,
+    `${configDir}/plugins/*/data.json`,
+  ];
+}
 
 export interface DeviceFlowResponse {
   device_code: string;

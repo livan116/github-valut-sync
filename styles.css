@@ -1,0 +1,72 @@
+/* Git Sync — all styling lives here (no inline styles). */
+
+.git-sync-status-item {
+  cursor: pointer;
+}
+
+/* Device-flow login panel (settings tab) */
+.git-sync-device-panel {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.git-sync-device-link {
+  display: block;
+}
+
+.git-sync-user-code {
+  font-size: 2rem;
+  letter-spacing: 0.25em;
+  font-weight: 700;
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 2px solid var(--interactive-accent);
+  border-radius: 6px;
+  padding: 8px 24px;
+  display: inline-block;
+  margin: 12px auto;
+  font-family: var(--font-monospace);
+}
+
+/* Conflict modal */
+.git-sync-conflict-diff {
+  background: var(--background-secondary);
+  padding: 8px;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 180px;
+  font-size: 12px;
+}
+
+.git-sync-conflict-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.git-sync-conflict-version {
+  padding: 8px;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 260px;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.git-sync-conflict-ours {
+  background: rgba(var(--color-green-rgb, 0, 160, 0), 0.15);
+}
+
+.git-sync-conflict-theirs {
+  background: rgba(var(--color-blue-rgb, 0, 90, 200), 0.15);
+}
+
+@media (max-width: 600px) {
+  .git-sync-conflict-columns {
+    grid-template-columns: 1fr;
+  }
+}

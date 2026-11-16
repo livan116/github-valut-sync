@@ -59,7 +59,7 @@ const gitHttp = {
       statusCode: response.status,
       statusMessage: "OK",
       body: responseBody(),
-      headers: response.headers as Record<string, string>,
+      headers: response.headers,
     };
   },
 };
