@@ -1,4 +1,10 @@
 import { DataAdapter } from "obsidian";
+import { Buffer } from "buffer/";
+
+/** Node-style error carrying an errno `code`, which isomorphic-git inspects. */
+function fsError(code: string, message: string): Error & { code: string } {
+  return Object.assign(new Error(message), { code });
+}
 
 type Stats = {
   type: "file" | "dir";
@@ -48,9 +54,7 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
         }
         return Buffer.from(content);
       } catch {
-        const err: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory, open '${path}'`);
-        err.code = "ENOENT";
-        throw err;
+        throw fsError("ENOENT", `ENOENT: no such file or directory, open '${path}'`);
       }
     },
 
@@ -85,9 +89,7 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
         const folders = result.folders.map((f) => f.split("/").pop()!);
         return [...folders, ...files];
       } catch {
-        const err: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory, scandir '${path}'`);
-        err.code = "ENOENT";
-        throw err;
+        throw fsError("ENOENT", `ENOENT: no such file or directory, scandir '${path}'`);
       }
     },
 
@@ -125,9 +127,7 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
           isSymbolicLink: () => false,
         };
       } catch {
-        const err: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory, stat '${path}'`);
-        err.code = "ENOENT";
-        throw err;
+        throw fsError("ENOENT", `ENOENT: no such file or directory, stat '${path}'`);
       }
     },
 
@@ -136,11 +136,11 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
     },
 
     async readlink(path: string): Promise<string> {
-      throw Object.assign(new Error(`EINVAL: readlink not supported '${path}'`), { code: "EINVAL" });
+      throw fsError("EINVAL", `EINVAL: readlink not supported '${path}'`);
     },
 
     async symlink(): Promise<void> {
-      throw Object.assign(new Error("EINVAL: symlink not supported"), { code: "EINVAL" });
+      throw fsError("EINVAL", "EINVAL: symlink not supported");
     },
 
     async chmod(): Promise<void> {

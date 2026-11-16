@@ -44,7 +44,7 @@ Laptop   ──┘
 - Obsidian **1.0.0** or later
 - A **free GitHub account** — [sign up at github.com](https://github.com/join) if you don't have one
 - Internet access for sync (offline edits are queued and synced when back online)
-- Node.js **18+** and npm (for building from source)
+- Node.js **20.12+** and npm (for building from source)
 
 ---
 
@@ -54,7 +54,7 @@ Laptop   ──┘
 
 | Tool | Version | Install |
 |---|---|---|
-| Node.js | 18+ | https://nodejs.org |
+| Node.js | 20.12+ | https://nodejs.org |
 | npm | 9+ | Bundled with Node.js |
 | Git | any | https://git-scm.com |
 
@@ -142,6 +142,7 @@ github-valut-sync/
 ├── .env                          # Local secrets — git-ignored, never committed
 ├── .env.example                  # Template — copy to .env and fill in CLIENT_ID
 ├── manifest.json                 # Obsidian plugin manifest
+├── styles.css                    # All plugin styling (no inline styles)
 ├── package.json
 ├── tsconfig.json
 ├── esbuild.config.mjs
@@ -158,12 +159,13 @@ After running `npm run build`:
 
 1. Create the plugin folder inside your vault:
    ```
-   YourVault/.obsidian/plugins/github-vault-sync/
+   YourVault/.obsidian/plugins/git-obsi-sync/
    ```
-2. Copy these two files into that folder:
+2. Copy these three files into that folder:
    ```
    main.js
    manifest.json
+   styles.css
    ```
 3. Open Obsidian → **Settings** → **Community plugins**
 4. Turn off **Restricted Mode** if prompted
@@ -176,7 +178,7 @@ After running `npm run build`:
 mklink /D "C:\path\to\vault\.obsidian\plugins\github-vault-sync" "C:\path\to\github-valut-sync"
 
 # macOS / Linux
-ln -s /path/to/github-valut-sync /path/to/vault/.obsidian/plugins/github-vault-sync
+ln -s /path/to/github-valut-sync /path/to/vault/.obsidian/plugins/git-obsi-sync
 ```
 
 ### Option B — BRAT (Beta Testers)
@@ -373,7 +375,7 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 - The plugin uses Obsidian's built-in HTTP layer so it does not need special mobile permissions.
 - If syncing fails on mobile, try disconnecting and reconnecting your GitHub account.
 - "Failed to load plugin" on iOS/Android means you have a build from before the Buffer fix — update to **1.0.3** or later.
-- Install from the **latest GitHub release** (`main.js` + `manifest.json`). If the plugin reports an older version than the release, delete the plugin folder and reinstall.
+- Install from the **latest GitHub release** (`main.js`, `manifest.json`, `styles.css`). If the plugin reports an older version than the release, delete the plugin folder and reinstall.
 
 ### `.git` folder visible in vault
 The `.git` folder is hidden in Obsidian by default. If you see it, go to  
@@ -418,9 +420,23 @@ A: The `repo` scope is the minimum required to create and push to **private** re
 
 ---
 
+## Network Use & Disclosure
+
+Git Sync makes network requests **only** to GitHub, and only to do what you ask:
+
+| Destination | Purpose |
+|---|---|
+| `github.com/login/device/code` and `github.com/login/oauth/access_token` | GitHub Device Flow login (shows you a code, then waits for you to approve it) |
+| `api.github.com` | Read your username, check whether the vault repo exists, and create it (private) |
+| `github.com/<you>/<repo>.git` (HTTPS) | Git fetch / push / clone of your vault's files |
+
+No analytics, telemetry, or third-party servers are used. The plugin reads the list of files in your vault in order to sync them.
+
+---
+
 ## Privacy & Security
 
-- Your GitHub **access token** is stored only in Obsidian's local plugin data folder (`.obsidian/plugins/github-vault-sync/data.json`) on each device. It never leaves your device except to communicate directly with GitHub's API.
+- Your GitHub **access token** is stored only in Obsidian's local plugin data folder (`.obsidian/plugins/git-obsi-sync/data.json`) on each device. It never leaves your device except to communicate directly with GitHub's API.
 - The plugin requests only the **`repo` scope** — the minimum required to create and access private repositories.
 - To revoke access at any time: GitHub → Settings → Applications → Authorized OAuth Apps → **Revoke**.
 

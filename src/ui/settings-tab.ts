@@ -14,12 +14,10 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "MultiSync Settings" });
-
     const settings = this.plugin.settings;
 
     // ── Account section ──────────────────────────────────────────────────────
-    containerEl.createEl("h3", { text: "GitHub Account" });
+    new Setting(containerEl).setName("GitHub account").setHeading();
 
     if (settings.githubToken && settings.githubUsername) {
       // Connected state
@@ -61,7 +59,7 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
     }
 
     // ── Sync options ──────────────────────────────────────────────────────────
-    containerEl.createEl("h3", { text: "Sync Options" });
+    new Setting(containerEl).setName("Sync options").setHeading();
 
     new Setting(containerEl)
       .setName("Auto-sync")
@@ -103,7 +101,7 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
       );
 
     // ── Manual sync ───────────────────────────────────────────────────────────
-    containerEl.createEl("h3", { text: "Manual Sync" });
+    new Setting(containerEl).setName("Manual sync").setHeading();
 
     new Setting(containerEl)
       .setName("Sync now")
@@ -125,41 +123,35 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
   }
 
   private async startDeviceFlow(btn: ButtonComponent): Promise<void> {
-    btn.setButtonText("Connecting…").setDisabled(true);
+    // buttonEl.disabled works on every Obsidian version (ButtonComponent.setDisabled needs 1.2.3+)
+    btn.setButtonText("Connecting…");
+    btn.buttonEl.disabled = true;
 
     try {
       const deviceFlow = await requestDeviceCode();
 
       // Show the user their one-time code
-      const modal = this.containerEl.createDiv({ cls: "multisync-device-modal" });
-      modal.style.cssText =
-        "background:var(--background-secondary);border-radius:8px;padding:16px;" +
-        "margin-top:12px;text-align:center;";
+      const modal = this.containerEl.createDiv({ cls: "git-sync-device-panel" });
       modal.createEl("p", {
         text: "Open this URL in your browser and enter the code below:",
       });
-      const link = modal.createEl("a", {
+      modal.createEl("a", {
         text: deviceFlow.verification_uri,
         href: deviceFlow.verification_uri,
+        cls: "git-sync-device-link",
       });
-      link.style.display = "block";
-      const codeEl = modal.createEl("h1", {
+      modal.createEl("h1", {
         text: deviceFlow.user_code,
-        cls: "multisync-user-code",
+        cls: "git-sync-user-code",
       });
-      // Explicit styling so the code is visible regardless of Obsidian theme
-      codeEl.style.cssText =
-        "font-size:2rem;letter-spacing:0.25em;font-weight:700;" +
-        "color:var(--text-normal);background:var(--background-primary);" +
-        "border:2px solid var(--interactive-accent);border-radius:6px;" +
-        "padding:8px 24px;display:inline-block;margin:12px auto;font-family:monospace;";
       modal.createEl("p", {
         text: "Waiting for you to approve in the browser…",
         cls: "setting-item-description",
       });
 
       // Restore button so the user can cancel / retry while waiting
-      btn.setButtonText("Cancel").setDisabled(false);
+      btn.setButtonText("Cancel");
+      btn.buttonEl.disabled = false;
 
       // Open browser automatically
       window.open(deviceFlow.verification_uri, "_blank");
@@ -187,9 +179,10 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // Remove the code panel if it's still visible
-      this.containerEl.querySelector(".multisync-device-modal")?.remove();
+      this.containerEl.querySelector(".git-sync-device-panel")?.remove();
       new Notice(`Connection failed: ${msg}`);
-      btn.setButtonText("Connect GitHub").setDisabled(false);
+      btn.setButtonText("Connect GitHub");
+      btn.buttonEl.disabled = false;
     }
   }
 }

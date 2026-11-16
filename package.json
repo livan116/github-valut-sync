@@ -1,6 +1,6 @@
 {
   "name": "obsidian-multisync",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Sync Obsidian vaults across devices via GitHub",
   "main": "main.js",
   "scripts": {
@@ -9,11 +9,10 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
-    "isomorphic-git": "^1.25.0"
+    "isomorphic-git": "^1.44.14"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "dotenv": "^18.0.10",
     "esbuild": "^0.20.0",
     "obsidian": "latest",
     "tslib": "^2.6.0",

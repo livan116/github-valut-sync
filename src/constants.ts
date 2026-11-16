@@ -1,5 +1,6 @@
-// Injected by esbuild `define` at build time (see esbuild.config.mjs).
-export const CLIENT_ID: string = process.env.CLIENT_ID ?? "";
+// Replaced at build time by esbuild `define` (see esbuild.config.mjs).
+declare const __CLIENT_ID__: string;
+export const CLIENT_ID: string = __CLIENT_ID__;
 
 export const GITHUB_DEVICE_URL = "https://github.com/login/device/code";
 export const GITHUB_TOKEN_URL  = "https://github.com/login/oauth/access_token";

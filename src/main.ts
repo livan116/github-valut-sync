@@ -1,7 +1,7 @@
 // MUST stay first: defines the global Buffer on mobile before anything else loads.
 import "./buffer-shim";
-import { Plugin, Notice, TFile, TFolder, TAbstractFile } from "obsidian";
-import { PluginSettings, DEFAULT_SETTINGS, SyncStatus, ConflictFile } from "./types";
+import { Plugin, Notice, TFile, TFolder, TAbstractFile, FileSystemAdapter } from "obsidian";
+import { PluginSettings, DEFAULT_SETTINGS, defaultExcludePatterns, SyncStatus, ConflictFile } from "./types";
 import { MultiSyncSettingsTab } from "./ui/settings-tab";
 import { StatusBarItem } from "./ui/status-bar";
 import { ConflictModal } from "./ui/conflict-modal";
@@ -19,7 +19,7 @@ export default class MultiSyncPlugin extends Plugin {
     await this.loadSettings();
 
     this.statusBar = new StatusBarItem(this);
-    this.statusBar.onClick(() => this.triggerManualSync());
+    this.statusBar.onClick(() => void this.triggerManualSync());
 
     this.addSettingTab(new MultiSyncSettingsTab(this.app, this));
 
@@ -27,7 +27,7 @@ export default class MultiSyncPlugin extends Plugin {
     this.addCommand({
       id: "sync-now",
       name: "Sync vault now",
-      callback: () => this.triggerManualSync(),
+      callback: () => void this.triggerManualSync(),
     });
 
     // Boot sync engine if already connected
@@ -40,24 +40,8 @@ export default class MultiSyncPlugin extends Plugin {
     }
 
     // Pull on open — wait for workspace to be ready
-    this.app.workspace.onLayoutReady(async () => {
-      if (this.gitSync) {
-        this.setStatus("pulling");
-        try {
-          const conflicts = await this.gitSync.pull();
-          if (conflicts.length > 0) {
-            this.setStatus("conflict");
-            this.showConflictModal(conflicts);
-          } else {
-            this.setStatus("idle");
-          }
-        } catch (err) {
-          // Pull errors on open are non-fatal (e.g. offline) — just show error state
-          const msg = err instanceof Error ? err.message : String(err);
-          this.setStatus("error", "Pull failed on open");
-          console.error("Git Sync: pull on open failed:", msg);
-        }
-      }
+    this.app.workspace.onLayoutReady(() => {
+      void this.pullOnOpen();
     });
 
     // Watch file changes for auto-sync
@@ -108,15 +92,46 @@ export default class MultiSyncPlugin extends Plugin {
     );
   }
 
-  async onunload(): Promise<void> {
-    // Flush pending changes on close
-    if (this.syncQueue) {
-      await this.syncQueue.flushNow();
+  private async pullOnOpen(): Promise<void> {
+    if (!this.gitSync) return;
+    this.setStatus("pulling");
+    try {
+      const conflicts = await this.gitSync.pull();
+      if (conflicts.length > 0) {
+        this.setStatus("conflict");
+        this.showConflictModal(conflicts);
+      } else {
+        this.setStatus("idle");
+      }
+    } catch (err) {
+      // Pull errors on open are non-fatal (e.g. offline) — just show error state
+      const msg = err instanceof Error ? err.message : String(err);
+      this.setStatus("error", "Pull failed on open");
+      console.error("Git Sync: pull on open failed:", msg);
     }
   }
 
+  onunload(): void {
+    // Flush pending changes on close (Obsidian does not await onunload)
+    if (this.syncQueue) {
+      void this.syncQueue.flushNow();
+    }
+  }
+
+  /** Vault root on desktop; empty string on mobile, where the adapter has no filesystem path. */
+  private getVaultPath(): string {
+    const adapter = this.app.vault.adapter;
+    return adapter instanceof FileSystemAdapter ? adapter.getBasePath() : "";
+  }
+
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved = ((await this.loadData()) ?? {}) as Partial<PluginSettings>;
+    this.settings = Object.assign(
+      {},
+      DEFAULT_SETTINGS,
+      { excludePatterns: defaultExcludePatterns(this.app.vault.configDir) },
+      saved
+    );
   }
 
   async saveSettings(): Promise<void> {
@@ -139,11 +154,7 @@ export default class MultiSyncPlugin extends Plugin {
     this.settings.repoName = repoName;
 
     const adapter = this.app.vault.adapter;
-    // Obsidian exposes basePath on FileSystemAdapter (desktop). On mobile the vault
-    // root is the adapter itself, so we fall back to an empty string which causes
-    // isomorphic-git to use relative paths from the adapter root.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const vaultPath: string = (adapter as any).basePath ?? "";
+    const vaultPath = this.getVaultPath();
 
     const sync = new GitSync(adapter, vaultPath, token, username, repoName);
 
@@ -191,8 +202,7 @@ export default class MultiSyncPlugin extends Plugin {
     if (!githubToken || !githubUsername || !repoName) return;
 
     const adapter = this.app.vault.adapter;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const vaultPath: string = (adapter as any).basePath ?? "";
+    const vaultPath = this.getVaultPath();
 
     this.gitSync = new GitSync(
       adapter,
@@ -206,7 +216,7 @@ export default class MultiSyncPlugin extends Plugin {
       this.setStatus(status, detail);
       if (status === "idle") {
         this.settings.lastSyncTime = Date.now();
-        this.saveSettings();
+        void this.saveSettings();
       }
     });
   }

@@ -15,7 +15,7 @@ export class StatusBarItem {
 
   constructor(plugin: Plugin) {
     this.el = plugin.addStatusBarItem();
-    this.el.style.cursor = "pointer";
+    this.el.addClass("git-sync-status-item");
     this.set("idle");
   }
 

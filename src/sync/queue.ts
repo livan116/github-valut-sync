@@ -6,7 +6,7 @@ type StatusCallback = (status: SyncStatus, detail?: string) => void;
 
 export class SyncQueue {
   private pendingFiles = new Set<string>();
-  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private debounceTimer: number | null = null;
   private running = false;
   private gitSync: GitSync;
   private onStatus: StatusCallback;
@@ -19,14 +19,14 @@ export class SyncQueue {
   /** Enqueue a changed file path. Debounces before triggering sync. */
   enqueue(filepath: string): void {
     this.pendingFiles.add(filepath);
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => this.flush(), SYNC_DEBOUNCE_MS);
+    if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
+    this.debounceTimer = window.setTimeout(() => this.flush(), SYNC_DEBOUNCE_MS);
   }
 
   /** Immediately drain the queue (used on vault close). */
   async flushNow(): Promise<SyncResult | null> {
     if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
+      window.clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
     return this.flush();
@@ -60,7 +60,7 @@ export class SyncQueue {
       this.running = false;
       // If more files arrived while we were syncing, flush again
       if (this.pendingFiles.size > 0) {
-        setTimeout(() => this.flush(), 500);
+        window.setTimeout(() => this.flush(), 500);
       }
     }
   }

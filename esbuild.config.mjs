@@ -1,10 +1,17 @@
 import esbuild from "esbuild";
 import process from "process";
 import { builtinModules } from "module";
-import dotenv from "dotenv";
+import { existsSync } from "fs";
 
-// Load .env (local dev). Real environment variables (e.g. a CI secret) win.
-dotenv.config({ quiet: true });
+// Load .env (local dev) with Node's built-in loader (Node 20.12+). It never overrides
+// variables that are already set, so a real environment variable (e.g. a CI secret) wins.
+if (existsSync(".env")) {
+  try {
+    process.loadEnvFile(".env");
+  } catch {
+    console.warn("Could not read .env; continuing without it.");
+  }
+}
 
 const prod = process.argv[2] === "production";
 
@@ -46,8 +53,8 @@ esbuild
       "@lezer/lr",
       ...nodeBuiltins,
     ],
-    // Replaced at build time; `process` does not exist on mobile, so it must never survive into main.js.
-    define: { "process.env.CLIENT_ID": JSON.stringify(clientId) },
+    // Replaced at build time (see src/constants.ts); nothing here may reference Node globals at runtime.
+    define: { __CLIENT_ID__: JSON.stringify(clientId) },
     format: "cjs",
     target: "es2018",
     logLevel: "info",
