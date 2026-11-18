@@ -69,8 +69,10 @@ export function createFsAdapter(adapter: DataAdapter, vaultPath: string) {
       if (typeof data === "string") {
         await adapter.write(relativePath, data);
       } else {
-        const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
-        await adapter.writeBinary(relativePath, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer);
+        // Copy into a fresh ArrayBuffer: the source may be a view into a larger shared buffer.
+        const exact = new ArrayBuffer(data.byteLength);
+        new Uint8Array(exact).set(data);
+        await adapter.writeBinary(relativePath, exact);
       }
     },
 

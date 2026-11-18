@@ -17,6 +17,11 @@ interface MergeState {
   paths: string[];
 }
 
+/** Shape of GetRemoteInfoResult.refs (typed as `any` by isomorphic-git). */
+interface RemoteRefs {
+  heads?: Record<string, string>;
+}
+
 function errCode(err: unknown): string | undefined {
   return (err as { code?: string } | null)?.code;
 }
@@ -151,7 +156,9 @@ export class GitSync {
       url: this.remoteUrl,
       onAuth: () => ({ username: this.username, password: this.token }),
     });
-    if (!info.refs?.heads?.[DEFAULT_BRANCH]) return null;
+    // isomorphic-git types `refs` as any; narrow it to the shape it actually returns.
+    const heads = (info.refs as RemoteRefs | undefined)?.heads;
+    if (!heads?.[DEFAULT_BRANCH]) return null;
 
     const res = await git.fetch({
       ...this.netOpts(),

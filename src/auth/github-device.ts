@@ -70,7 +70,7 @@ export async function pollForToken(
         // OS cutting a backgrounded mobile app's network). Treat it as a
         // transient miss and retry on the next tick; the deadline above still
         // bounds the total wait, so this cannot loop forever.
-        window.setTimeout(poll, currentInterval);
+        window.setTimeout(() => void poll(), currentInterval);
         return;
       }
 
@@ -81,11 +81,11 @@ export async function pollForToken(
 
       switch (data.error) {
         case "authorization_pending":
-          window.setTimeout(poll, currentInterval);
+          window.setTimeout(() => void poll(), currentInterval);
           break;
         case "slow_down":
           currentInterval += 5000;
-          window.setTimeout(poll, currentInterval);
+          window.setTimeout(() => void poll(), currentInterval);
           break;
         case "expired_token":
           reject(new Error("Code expired. Please reconnect."));
@@ -98,6 +98,6 @@ export async function pollForToken(
       }
     };
 
-    window.setTimeout(poll, currentInterval);
+    window.setTimeout(() => void poll(), currentInterval);
   });
 }

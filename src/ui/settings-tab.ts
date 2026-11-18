@@ -59,7 +59,7 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
     }
 
     // ── Sync options ──────────────────────────────────────────────────────────
-    new Setting(containerEl).setName("Sync options").setHeading();
+    new Setting(containerEl).setName("Automatic sync").setHeading();
 
     new Setting(containerEl)
       .setName("Auto-sync")
@@ -140,7 +140,7 @@ export class MultiSyncSettingsTab extends PluginSettingTab {
         href: deviceFlow.verification_uri,
         cls: "git-sync-device-link",
       });
-      modal.createEl("h1", {
+      modal.createDiv({
         text: deviceFlow.user_code,
         cls: "git-sync-user-code",
       });
