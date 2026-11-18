@@ -20,7 +20,7 @@ export class SyncQueue {
   enqueue(filepath: string): void {
     this.pendingFiles.add(filepath);
     if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
-    this.debounceTimer = window.setTimeout(() => this.flush(), SYNC_DEBOUNCE_MS);
+    this.debounceTimer = window.setTimeout(() => void this.flush(), SYNC_DEBOUNCE_MS);
   }
 
   /** Immediately drain the queue (used on vault close). */
@@ -60,7 +60,7 @@ export class SyncQueue {
       this.running = false;
       // If more files arrived while we were syncing, flush again
       if (this.pendingFiles.size > 0) {
-        window.setTimeout(() => this.flush(), 500);
+        window.setTimeout(() => void this.flush(), 500);
       }
     }
   }
