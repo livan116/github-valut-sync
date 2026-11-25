@@ -235,6 +235,23 @@ The plugin will:
 - **First device**: Create a new private repo named `obsidian-<your-vault-name>` and push all your files.
 - **Additional devices**: Detect the existing repo and clone it automatically.
 
+### Adding Another Device (laptop, phone, tablet)
+
+The plugin picks the GitHub repo from the **vault name** (`obsidian-<vault-name>`, lowercased, with every run of characters other than letters and digits replaced by a single `-`). It does not link devices in any other way. So a second device must open a vault with the same name as the first one.
+
+On the new device:
+
+1. **Create a new, empty vault** in Obsidian with the **same name** as the vault on your first device. Do **not** copy the vault folder over.
+2. **Install the plugin** in that vault (see [Part 2](#part-2--installing-the-plugin)). On mobile, BRAT is the easiest route.
+3. Open **Settings** → **GitHub Vault Sync** and follow Steps 1–3 above, using the **same GitHub account**.
+4. The plugin finds `obsidian-<vault-name>` on your account and clones it into the vault. Wait for the `Cloned repo: <you>/obsidian-<vault-name>` notice.
+
+Repeat for each additional device. Each device logs in on its own (the token in `data.json` is never synced).
+
+To confirm two devices use the same repo, compare the `github.com/<you>/obsidian-…` line shown in **Settings → GitHub Vault Sync** on each device. Names that differ only by case, spaces, or punctuation (`My Notes` / `my-notes`) map to the **same** repo; a different word maps to a different repo and starts a separate sync.
+
+> **Why an empty vault?** The clone fails with a `CheckoutConflictError` if the vault already holds a file at the same path as a file in the repo, even when the contents are identical. Your files are left untouched and no sync starts. If the new device already has notes you want to keep, move them out of the vault, connect, then copy them back once the clone has finished. Copying back a file that already exists in the repo overwrites the repo's version on the next sync, so merge those by hand first.
+
 ---
 
 ## Part 4 — Using the Plugin
@@ -319,9 +336,9 @@ Vault: "Research"         →  github.com/you/obsidian-research
 ```
 
 On each device:
-1. Open the vault in Obsidian.
+1. Open the vault in Obsidian. On a new device, first create an **empty** vault with the same name as the original — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
 2. Go to **Settings → GitHub Vault Sync** → connect your GitHub account.
-3. The plugin detects which vault is open and connects to the right repo automatically.
+3. The plugin derives the repo name from the open vault's name and connects to that repo automatically.
 
 ---
 
@@ -369,6 +386,10 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 1. Make sure you connected the **same GitHub account** on both devices.
 2. Check the status bar on both devices — both should show `✓ MultiSync`.
 3. Trigger a manual sync on the device that has the new files (`Ctrl/Cmd + P` → "Sync vault now").
+4. Open **Settings → GitHub Vault Sync** on both devices and compare the `github.com/<you>/obsidian-…` line. If they differ, the vault names don't match — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
+
+### "Connection failed: Your local changes to the following files would be overwritten by checkout"
+This is a `CheckoutConflictError`. The new device's vault already contains files at the same paths as files in the repo, so the first clone was refused. Move those notes out of the vault (or use a new empty vault with the same name), then connect again. If the settings page already shows you as connected, click **Disconnect** first, then **Connect GitHub**.
 
 ### Mobile — "Cannot sync"
 - Ensure your mobile device has an internet connection.
@@ -404,7 +425,7 @@ A: No. The plugin runs entirely on your device and connects directly to your own
 A: When both devices come online, the plugin detects the conflict and shows you the resolution modal.
 
 **Q: Can I use this with an existing vault that already has files?**  
-A: Yes. On first connection, the plugin pushes all your existing files to the new GitHub repo.
+A: On the **first** device, yes: on first connection the plugin pushes all your existing files to the new GitHub repo. On **additional** devices, start from an empty vault with the same name instead — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
 
 **Q: Does this work with Obsidian's built-in sync?**  
 A: It's designed to replace, not complement, Obsidian Sync. Using both at once is not recommended as they may conflict.
