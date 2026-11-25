@@ -7,7 +7,7 @@ Git Sync saves your notes to a private repository in your own GitHub account and
 
 ## Quick Start
 
-1. [Install the plugin](#installation) (BRAT is the easiest way).
+1. [Install the plugin](#installation) from Community Plugins.
 2. [Connect your GitHub account](#getting-started--connect-github) in the plugin settings. This takes one approval click in your browser.
 3. The plugin creates a private repo named after your vault and uploads your notes.
 4. To use the same notes on another device, [create an empty vault with the same name there](#adding-another-device-laptop-phone-tablet) and connect the same account.
@@ -59,17 +59,25 @@ Laptop   ──┘
 
 ## Installation
 
-Install the plugin on **every device** you want to sync, using one of these two methods.
+Install the plugin on **every device** you want to sync, using any one of these methods.
 
-### Option A — BRAT (recommended, works on mobile)
+### Option A — Community Plugins (recommended, desktop and mobile)
+
+1. In Obsidian, open **Settings** → **Community plugins**. Turn off **Restricted Mode** if prompted.
+2. Click **Browse** and search for **Git Sync**.
+3. Click **Install**, then **Enable**.
+
+### Option B — BRAT (install from the GitHub repo)
+
+Use this to install straight from the GitHub repo instead of the Community Plugins listing.
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins.
 2. Open BRAT settings → **Add Beta Plugin**
 3. Paste the repo URL: `https://github.com/livan116/github-valut-sync`
 4. Click **Add Plugin** — BRAT installs it automatically.
-5. Open Obsidian → **Settings** → **Community plugins** and turn **Git Sync** on (turn off **Restricted Mode** if prompted).
+5. Turn **Git Sync** on under **Settings** → **Community plugins**.
 
-### Option B — Manual install from a release
+### Option C — Manual install from a release
 
 1. Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/livan116/github-valut-sync/releases/latest).
 2. Create the plugin folder inside your vault:
@@ -133,7 +141,7 @@ The plugin picks the GitHub repo from the **vault name** (`obsidian-<vault-name>
 On the new device:
 
 1. **Create a new, empty vault** in Obsidian with the **same name** as the vault on your first device. Do **not** copy the vault folder over.
-2. **Install the plugin** in that vault (see [Installation](#installation)). On mobile, BRAT is the easiest route.
+2. **Install the plugin** in that vault (see [Installation](#installation)). It's the same on every device, including mobile.
 3. Open **Settings** → **GitHub Vault Sync** and follow Steps 1–3 above, using the **same GitHub account**.
 4. The plugin finds `obsidian-<vault-name>` on your account and clones it into the vault. Wait for the `Cloned repo: <you>/obsidian-<vault-name>` notice.
 
