@@ -3,6 +3,17 @@
 > Sync your Obsidian vault across every device using your own **free private GitHub repo**.  
 > No subscription. No cloud fees. Works on desktop (Windows / macOS / Linux) and mobile (iOS / Android).
 
+Git Sync saves your notes to a private repository in your own GitHub account and keeps every device you use in step with it. You don't need to know Git: install the plugin, sign in to GitHub once, and it handles the rest.
+
+## Quick Start
+
+1. [Install the plugin](#installation) from Community Plugins.
+2. [Connect your GitHub account](#getting-started--connect-github) in the plugin settings. This takes one approval click in your browser.
+3. The plugin creates a private repo named after your vault and uploads your notes.
+4. To use the same notes on another device, [create an empty vault with the same name there](#adding-another-device-laptop-phone-tablet) and connect the same account.
+
+Want to build the plugin from source or contribute? See [Build from Source](#build-from-source) near the end of this file.
+
 ---
 
 ## How It Works
@@ -38,165 +49,53 @@ Laptop   ──┘
 - **No data leaves your account** — all files go into your own private GitHub repo
 
 ---
-
 ## Requirements
 
 - Obsidian **1.0.0** or later
 - A **free GitHub account** — [sign up at github.com](https://github.com/join) if you don't have one
 - Internet access for sync (offline edits are queued and synced when back online)
-- Node.js **20.12+** and npm (for building from source)
 
 ---
 
-## Part 1 — Developer Setup (Build from Source)
+## Installation
 
-### Prerequisites
+Install the plugin on **every device** you want to sync, using any one of these methods.
 
-| Tool | Version | Install |
-|---|---|---|
-| Node.js | 20.12+ | https://nodejs.org |
-| npm | 9+ | Bundled with Node.js |
-| Git | any | https://git-scm.com |
+### Option A — Community Plugins (recommended, desktop and mobile)
 
-### 1.1 — Clone the Repository
+1. In Obsidian, open **Settings** → **Community plugins**. Turn off **Restricted Mode** if prompted.
+2. Click **Browse** and search for **Git Sync**.
+3. Click **Install**, then **Enable**.
 
-```bash
-git clone https://github.com/livan116/github-valut-sync.git
-cd github-valut-sync
-```
+### Option B — BRAT (install from the GitHub repo)
 
-### 1.2 — Install Dependencies
-
-```bash
-npm install
-```
-
-This installs:
-- `isomorphic-git` — pure-JS git engine (works on mobile, no native binaries)
-- `esbuild` — fast bundler
-- `typescript` — type checker
-- `obsidian` — type definitions only (not bundled)
-
-### 1.3 — Register a GitHub OAuth App
-
-You need to register a free OAuth App so users can log in with their GitHub account.
-This is done **once** — the `client_id` is then baked into the plugin code.
-
-1. Go to [github.com/settings/developers](https://github.com/settings/developers)
-2. Click **OAuth Apps** → **New OAuth App**
-3. Fill in the form:
-
-   | Field | Value |
-   |---|---|
-   | Application name | `GitHub Vault Sync` |
-   | Homepage URL | `https://github.com/livan116/github-valut-sync` |
-   | Authorization callback URL | `https://obsidian.md` *(placeholder — Device Flow doesn't use this)* |
-
-4. Click **Register application**
-5. Copy the **Client ID** (looks like `Ov23li...`)
-6. Copy `.env.example` to `.env` and set your Client ID:
-   ```
-   CLIENT_ID=Ov23liYOUR_ACTUAL_ID
-   ```
-
-   The build reads `CLIENT_ID` from `.env` (or a real environment variable / CI secret, which wins) and bakes it into `main.js`. If it is missing, the build prints a warning and falls back to the original author's public Client ID — **set your own if you are distributing a fork.**
-
-> **Do not** generate a Client Secret — Device Flow doesn't need it and secrets must never be embedded in plugin code.
-
-### 1.4 — Build the Plugin
-
-```bash
-# Development build (watch mode — rebuilds on every save)
-npm run dev
-
-# Production build (minified, no source maps)
-npm run build
-```
-
-Both commands output a single `main.js` file in the project root.
-
-**Watch mode** (`npm run dev`) keeps running and rebuilds automatically as you edit source files. Leave it running while you test in Obsidian.
-
-### 1.5 — Project Structure
-
-```
-github-valut-sync/
-├── src/
-│   ├── buffer-shim.ts            # Installs global Buffer on mobile (no Node.js there)
-│   ├── main.ts                   # Plugin entry point — wires everything together
-│   ├── types.ts                  # All TypeScript interfaces & types
-│   ├── constants.ts              # App-wide constants (CLIENT_ID injected here at build)
-│   ├── auth/
-│   │   └── github-device.ts      # GitHub OAuth Device Flow (no server needed)
-│   ├── github/
-│   │   └── api.ts                # GitHub REST API wrapper (create repo, get user)
-│   ├── sync/
-│   │   ├── fs-adapter.ts         # Bridges Obsidian DataAdapter → isomorphic-git fs
-│   │   ├── git-sync.ts           # Core git operations: init / clone / pull / push
-│   │   ├── queue.ts              # Debounced sync queue with mutex (no race conditions)
-│   │   └── conflict.ts           # Conflict diff summary helper
-│   └── ui/
-│       ├── settings-tab.ts       # Plugin settings page
-│       ├── conflict-modal.ts     # Side-by-side conflict resolution modal
-│       └── status-bar.ts         # Live sync indicator in the status bar
-├── .env                          # Local secrets — git-ignored, never committed
-├── .env.example                  # Template — copy to .env and fill in CLIENT_ID
-├── manifest.json                 # Obsidian plugin manifest
-├── styles.css                    # All plugin styling (no inline styles)
-├── package.json
-├── tsconfig.json
-├── esbuild.config.mjs
-└── main.js                       # Built output (git-ignored, generated by build)
-```
-
----
-
-## Part 2 — Installing the Plugin
-
-### Option A — Manual Install from Build Output
-
-After running `npm run build`:
-
-1. Create the plugin folder inside your vault:
-   ```
-   YourVault/.obsidian/plugins/git-obsi-sync/
-   ```
-2. Copy these three files into that folder:
-   ```
-   main.js
-   manifest.json
-   styles.css
-   ```
-3. Open Obsidian → **Settings** → **Community plugins**
-4. Turn off **Restricted Mode** if prompted
-5. Find **GitHub Vault Sync** in the list → toggle it **ON**
-
-**Tip for development:** You can symlink the project directory directly into your vault's plugins folder so the built `main.js` is picked up automatically after each build:
-
-```bash
-# Windows (run as Administrator)
-mklink /D "C:\path\to\vault\.obsidian\plugins\git-obsi-sync" "C:\path\to\github-valut-sync"
-
-# macOS / Linux
-ln -s /path/to/github-valut-sync /path/to/vault/.obsidian/plugins/git-obsi-sync
-```
-
-### Option B — BRAT (Beta Testers)
+Use this to install straight from the GitHub repo instead of the Community Plugins listing.
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins.
 2. Open BRAT settings → **Add Beta Plugin**
 3. Paste the repo URL: `https://github.com/livan116/github-valut-sync`
 4. Click **Add Plugin** — BRAT installs it automatically.
+5. Turn **Git Sync** on under **Settings** → **Community plugins**.
+
+### Option C — Manual install from a release
+
+1. Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/livan116/github-valut-sync/releases/latest).
+2. Create the plugin folder inside your vault:
+   ```
+   YourVault/.obsidian/plugins/git-obsi-sync/
+   ```
+3. Copy the three files into that folder.
+4. Open Obsidian → **Settings** → **Community plugins**, turn off **Restricted Mode** if prompted, then turn the plugin **ON**.
 
 ---
 
-## Part 3 — Connecting Your GitHub Account
+## Getting Started — Connect GitHub
 
 > Do this on **every device** where you want sync. Use the **same GitHub account** each time.
 
 ### Step 1 — Open Plugin Settings
 
-Go to **Settings** → **GitHub Vault Sync** (scroll down in the left sidebar under Community Plugins).
+Go to **Settings** → **Git Sync** (scroll down in the left sidebar under Community Plugins).
 
 ### Step 2 — Click "Connect GitHub"
 
@@ -235,9 +134,25 @@ The plugin will:
 - **First device**: Create a new private repo named `obsidian-<your-vault-name>` and push all your files.
 - **Additional devices**: Detect the existing repo and clone it automatically.
 
----
+### Adding Another Device (laptop, phone, tablet)
 
-## Part 4 — Using the Plugin
+The plugin picks the GitHub repo from the **vault name** (`obsidian-<vault-name>`, lowercased, with every run of characters other than letters and digits replaced by a single `-`). It does not link devices in any other way. So a second device must open a vault with the same name as the first one.
+
+On the new device:
+
+1. **Create a new, empty vault** in Obsidian with the **same name** as the vault on your first device. Do **not** copy the vault folder over.
+2. **Install the plugin** in that vault (see [Installation](#installation)). It's the same on every device, including mobile.
+3. Open **Settings** → **Git Sync** and follow Steps 1–3 above, using the **same GitHub account**.
+4. The plugin finds `obsidian-<vault-name>` on your account and clones it into the vault. Wait for the `Cloned repo: <you>/obsidian-<vault-name>` notice.
+
+Repeat for each additional device. Each device logs in on its own (the token in `data.json` is never synced).
+
+To confirm two devices use the same repo, compare the `github.com/<you>/obsidian-…` line shown in **Settings → Git Sync** on each device. Names that differ only by case, spaces, or punctuation (`My Notes` / `my-notes`) map to the **same** repo; a different word maps to a different repo and starts a separate sync.
+
+> **Why an empty vault?** The clone fails with a `CheckoutConflictError` if the vault already holds a file at the same path as a file in the repo, even when the contents are identical. Your files are left untouched and no sync starts. If the new device already has notes you want to keep, move them out of the vault, connect, then copy them back once the clone has finished. Copying back a file that already exists in the repo overwrites the repo's version on the next sync, so merge those by hand first.
+
+---
+## Using the Plugin
 
 ### Automatic Sync
 
@@ -271,7 +186,7 @@ Click the status bar item to trigger an **immediate manual sync** at any time.
 
 ---
 
-## Part 5 — Resolving Conflicts
+## Resolving Conflicts
 
 A conflict happens when the **same file** is edited on two devices before either has synced.
 
@@ -308,7 +223,7 @@ Until every conflicted file is resolved, nothing is pushed and auto-sync stays p
 
 ---
 
-## Part 6 — Multiple Vaults
+## Multiple Vaults
 
 Each vault gets its **own separate repo** automatically. There's nothing extra to configure.
 
@@ -319,13 +234,13 @@ Vault: "Research"         →  github.com/you/obsidian-research
 ```
 
 On each device:
-1. Open the vault in Obsidian.
-2. Go to **Settings → GitHub Vault Sync** → connect your GitHub account.
-3. The plugin detects which vault is open and connects to the right repo automatically.
+1. Open the vault in Obsidian. On a new device, first create an **empty** vault with the same name as the original — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
+2. Go to **Settings → Git Sync** → connect your GitHub account.
+3. The plugin derives the repo name from the open vault's name and connects to that repo automatically.
 
 ---
 
-## Part 7 — Settings Reference
+## Settings Reference
 
 | Setting | Default | Description |
 |---|---|---|
@@ -343,7 +258,7 @@ On each device:
 
 These are excluded because they change frequently, are device-specific, and don't need to be shared.
 
-To add more exclusions, open **Settings → GitHub Vault Sync → Excluded patterns** and add one pattern per line. Wildcards (`*`) are supported.
+To add more exclusions, open **Settings → Git Sync → Excluded patterns** and add one pattern per line. Wildcards (`*`) are supported.
 
 Example — exclude all files in a `Private` folder:
 ```
@@ -351,7 +266,6 @@ Private/*
 ```
 
 ---
-
 ## Troubleshooting
 
 ### "Device code expired"
@@ -362,13 +276,17 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 
 ### Sync shows `✗ Sync Error`
 1. Check your internet connection.
-2. Open **Settings → GitHub Vault Sync** — if disconnected, click **Connect GitHub** to re-authenticate.
+2. Open **Settings → Git Sync** — if disconnected, click **Connect GitHub** to re-authenticate.
 3. GitHub tokens occasionally expire — reconnecting issues a fresh token.
 
 ### Files not appearing on second device
 1. Make sure you connected the **same GitHub account** on both devices.
 2. Check the status bar on both devices — both should show `✓ MultiSync`.
 3. Trigger a manual sync on the device that has the new files (`Ctrl/Cmd + P` → "Sync vault now").
+4. Open **Settings → Git Sync** on both devices and compare the `github.com/<you>/obsidian-…` line. If they differ, the vault names don't match — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
+
+### "Connection failed: Your local changes to the following files would be overwritten by checkout"
+This is a `CheckoutConflictError`. The new device's vault already contains files at the same paths as files in the repo, so the first clone was refused. Move those notes out of the vault (or use a new empty vault with the same name), then connect again. If the settings page already shows you as connected, click **Disconnect** first, then **Connect GitHub**.
 
 ### Mobile — "Cannot sync"
 - Ensure your mobile device has an internet connection.
@@ -380,16 +298,6 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 ### `.git` folder visible in vault
 The `.git` folder is hidden in Obsidian by default. If you see it, go to  
 **Settings → Files & Links → Excluded files** and add `.git`.
-
-### Build fails with "Cannot find module 'obsidian'"
-Run `npm install` to install devDependencies. The `obsidian` package provides types only.
-
-### Build warns "CLIENT_ID is not set"
-Copy `.env.example` to `.env` and fill in your GitHub OAuth App Client ID.
-
-### TypeScript errors after pulling
-Run `npm install` — a dependency may have been added. Then re-run `npm run build`.
-
 ---
 
 ## FAQ
@@ -404,7 +312,7 @@ A: No. The plugin runs entirely on your device and connects directly to your own
 A: When both devices come online, the plugin detects the conflict and shows you the resolution modal.
 
 **Q: Can I use this with an existing vault that already has files?**  
-A: Yes. On first connection, the plugin pushes all your existing files to the new GitHub repo.
+A: On the **first** device, yes: on first connection the plugin pushes all your existing files to the new GitHub repo. On **additional** devices, start from an empty vault with the same name instead — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
 
 **Q: Does this work with Obsidian's built-in sync?**  
 A: It's designed to replace, not complement, Obsidian Sync. Using both at once is not recommended as they may conflict.
@@ -439,6 +347,136 @@ No analytics, telemetry, or third-party servers are used. The plugin reads the l
 - Your GitHub **access token** is stored only in Obsidian's local plugin data folder (`.obsidian/plugins/git-obsi-sync/data.json`) on each device. It never leaves your device except to communicate directly with GitHub's API.
 - The plugin requests only the **`repo` scope** — the minimum required to create and access private repositories.
 - To revoke access at any time: GitHub → Settings → Applications → Authorized OAuth Apps → **Revoke**.
+
+---
+
+## Build from Source
+
+> Only needed if you want to modify or build the plugin yourself. To just use it, see [Installation](#installation).
+
+### Prerequisites
+
+| Tool | Version | Install |
+|---|---|---|
+| Node.js | 20.12+ | https://nodejs.org |
+| npm | 9+ | Bundled with Node.js |
+| Git | any | https://git-scm.com |
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/livan116/github-valut-sync.git
+cd github-valut-sync
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+This installs:
+- `isomorphic-git` — pure-JS git engine (works on mobile, no native binaries)
+- `esbuild` — fast bundler
+- `typescript` — type checker
+- `obsidian` — type definitions only (not bundled)
+
+### Register a GitHub OAuth App
+
+You need to register a free OAuth App so users can log in with their GitHub account.
+This is done **once** — the `client_id` is then baked into the plugin code.
+
+1. Go to [github.com/settings/developers](https://github.com/settings/developers)
+2. Click **OAuth Apps** → **New OAuth App**
+3. Fill in the form:
+
+   | Field | Value |
+   |---|---|
+   | Application name | `GitHub Vault Sync` |
+   | Homepage URL | `https://github.com/livan116/github-valut-sync` |
+   | Authorization callback URL | `https://obsidian.md` *(placeholder — Device Flow doesn't use this)* |
+
+4. Click **Register application**
+5. Copy the **Client ID** (looks like `Ov23li...`)
+6. Copy `.env.example` to `.env` and set your Client ID:
+   ```
+   CLIENT_ID=Ov23liYOUR_ACTUAL_ID
+   ```
+
+   The build reads `CLIENT_ID` from `.env` (or a real environment variable / CI secret, which wins) and bakes it into `main.js`. If it is missing, the build prints a warning and falls back to the original author's public Client ID — **set your own if you are distributing a fork.**
+
+> **Do not** generate a Client Secret — Device Flow doesn't need it and secrets must never be embedded in plugin code.
+
+### Build the Plugin
+
+```bash
+# Development build (watch mode — rebuilds on every save)
+npm run dev
+
+# Production build (minified, no source maps)
+npm run build
+```
+
+Both commands output a single `main.js` file in the project root.
+
+**Watch mode** (`npm run dev`) keeps running and rebuilds automatically as you edit source files. Leave it running while you test in Obsidian.
+
+### Project Structure
+
+```
+github-valut-sync/
+├── src/
+│   ├── buffer-shim.ts            # Installs global Buffer on mobile (no Node.js there)
+│   ├── main.ts                   # Plugin entry point — wires everything together
+│   ├── types.ts                  # All TypeScript interfaces & types
+│   ├── constants.ts              # App-wide constants (CLIENT_ID injected here at build)
+│   ├── auth/
+│   │   └── github-device.ts      # GitHub OAuth Device Flow (no server needed)
+│   ├── github/
+│   │   └── api.ts                # GitHub REST API wrapper (create repo, get user)
+│   ├── sync/
+│   │   ├── fs-adapter.ts         # Bridges Obsidian DataAdapter → isomorphic-git fs
+│   │   ├── git-sync.ts           # Core git operations: init / clone / pull / push
+│   │   ├── queue.ts              # Debounced sync queue with mutex (no race conditions)
+│   │   └── conflict.ts           # Conflict diff summary helper
+│   └── ui/
+│       ├── settings-tab.ts       # Plugin settings page
+│       ├── conflict-modal.ts     # Side-by-side conflict resolution modal
+│       └── status-bar.ts         # Live sync indicator in the status bar
+├── .env                          # Local secrets — git-ignored, never committed
+├── .env.example                  # Template — copy to .env and fill in CLIENT_ID
+├── manifest.json                 # Obsidian plugin manifest
+├── styles.css                    # All plugin styling (no inline styles)
+├── package.json
+├── tsconfig.json
+├── esbuild.config.mjs
+└── main.js                       # Built output (git-ignored, generated by build)
+```
+
+### Test Your Build in Obsidian
+
+Copy `main.js`, `manifest.json` and `styles.css` into `YourVault/.obsidian/plugins/git-obsi-sync/`, then enable the plugin under **Settings → Community plugins**.
+
+You can symlink the project directory directly into your vault's plugins folder so the built `main.js` is picked up automatically after each build:
+
+```bash
+# Windows (run as Administrator)
+mklink /D "C:\path\to\vault\.obsidian\plugins\git-obsi-sync" "C:\path\to\github-valut-sync"
+
+# macOS / Linux
+ln -s /path/to/github-valut-sync /path/to/vault/.obsidian/plugins/git-obsi-sync
+```
+
+### Build Problems
+
+### Build fails with "Cannot find module 'obsidian'"
+Run `npm install` to install devDependencies. The `obsidian` package provides types only.
+
+### Build warns "CLIENT_ID is not set"
+Copy `.env.example` to `.env` and fill in your GitHub OAuth App Client ID.
+
+### TypeScript errors after pulling
+Run `npm install` — a dependency may have been added. Then re-run `npm run build`.
 
 ---
 
@@ -480,7 +518,7 @@ cp .env.example .env
 # 4. Start watch mode
 npm run dev
 
-# 5. Symlink into your test vault (see Part 2 above)
+# 5. Symlink into your test vault (see Test Your Build in Obsidian above)
 # 6. Make your changes — Obsidian hot-reloads the plugin automatically
 # 7. Run a type check before submitting
 npx tsc --noEmit
@@ -489,7 +527,7 @@ npx tsc --noEmit
 For bugs and feature requests, open an [issue](https://github.com/livan116/github-valut-sync/issues).
 
 ---
+---
 
 ## License
 
-MIT © 2025 Livan Kumar
