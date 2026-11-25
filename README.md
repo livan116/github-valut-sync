@@ -95,7 +95,7 @@ Use this to install straight from the GitHub repo instead of the Community Plugi
 
 ### Step 1 — Open Plugin Settings
 
-Go to **Settings** → **GitHub Vault Sync** (scroll down in the left sidebar under Community Plugins).
+Go to **Settings** → **Git Sync** (scroll down in the left sidebar under Community Plugins).
 
 ### Step 2 — Click "Connect GitHub"
 
@@ -142,12 +142,12 @@ On the new device:
 
 1. **Create a new, empty vault** in Obsidian with the **same name** as the vault on your first device. Do **not** copy the vault folder over.
 2. **Install the plugin** in that vault (see [Installation](#installation)). It's the same on every device, including mobile.
-3. Open **Settings** → **GitHub Vault Sync** and follow Steps 1–3 above, using the **same GitHub account**.
+3. Open **Settings** → **Git Sync** and follow Steps 1–3 above, using the **same GitHub account**.
 4. The plugin finds `obsidian-<vault-name>` on your account and clones it into the vault. Wait for the `Cloned repo: <you>/obsidian-<vault-name>` notice.
 
 Repeat for each additional device. Each device logs in on its own (the token in `data.json` is never synced).
 
-To confirm two devices use the same repo, compare the `github.com/<you>/obsidian-…` line shown in **Settings → GitHub Vault Sync** on each device. Names that differ only by case, spaces, or punctuation (`My Notes` / `my-notes`) map to the **same** repo; a different word maps to a different repo and starts a separate sync.
+To confirm two devices use the same repo, compare the `github.com/<you>/obsidian-…` line shown in **Settings → Git Sync** on each device. Names that differ only by case, spaces, or punctuation (`My Notes` / `my-notes`) map to the **same** repo; a different word maps to a different repo and starts a separate sync.
 
 > **Why an empty vault?** The clone fails with a `CheckoutConflictError` if the vault already holds a file at the same path as a file in the repo, even when the contents are identical. Your files are left untouched and no sync starts. If the new device already has notes you want to keep, move them out of the vault, connect, then copy them back once the clone has finished. Copying back a file that already exists in the repo overwrites the repo's version on the next sync, so merge those by hand first.
 
@@ -235,7 +235,7 @@ Vault: "Research"         →  github.com/you/obsidian-research
 
 On each device:
 1. Open the vault in Obsidian. On a new device, first create an **empty** vault with the same name as the original — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
-2. Go to **Settings → GitHub Vault Sync** → connect your GitHub account.
+2. Go to **Settings → Git Sync** → connect your GitHub account.
 3. The plugin derives the repo name from the open vault's name and connects to that repo automatically.
 
 ---
@@ -258,7 +258,7 @@ On each device:
 
 These are excluded because they change frequently, are device-specific, and don't need to be shared.
 
-To add more exclusions, open **Settings → GitHub Vault Sync → Excluded patterns** and add one pattern per line. Wildcards (`*`) are supported.
+To add more exclusions, open **Settings → Git Sync → Excluded patterns** and add one pattern per line. Wildcards (`*`) are supported.
 
 Example — exclude all files in a `Private` folder:
 ```
@@ -276,14 +276,14 @@ You clicked **Cancel** on the GitHub authorization page. Click **Connect GitHub*
 
 ### Sync shows `✗ Sync Error`
 1. Check your internet connection.
-2. Open **Settings → GitHub Vault Sync** — if disconnected, click **Connect GitHub** to re-authenticate.
+2. Open **Settings → Git Sync** — if disconnected, click **Connect GitHub** to re-authenticate.
 3. GitHub tokens occasionally expire — reconnecting issues a fresh token.
 
 ### Files not appearing on second device
 1. Make sure you connected the **same GitHub account** on both devices.
 2. Check the status bar on both devices — both should show `✓ MultiSync`.
 3. Trigger a manual sync on the device that has the new files (`Ctrl/Cmd + P` → "Sync vault now").
-4. Open **Settings → GitHub Vault Sync** on both devices and compare the `github.com/<you>/obsidian-…` line. If they differ, the vault names don't match — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
+4. Open **Settings → Git Sync** on both devices and compare the `github.com/<you>/obsidian-…` line. If they differ, the vault names don't match — see [Adding Another Device](#adding-another-device-laptop-phone-tablet).
 
 ### "Connection failed: Your local changes to the following files would be overwritten by checkout"
 This is a `CheckoutConflictError`. The new device's vault already contains files at the same paths as files in the repo, so the first clone was refused. Move those notes out of the vault (or use a new empty vault with the same name), then connect again. If the settings page already shows you as connected, click **Disconnect** first, then **Connect GitHub**.
