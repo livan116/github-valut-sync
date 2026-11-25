@@ -175,7 +175,7 @@ After running `npm run build`:
 
 ```bash
 # Windows (run as Administrator)
-mklink /D "C:\path\to\vault\.obsidian\plugins\github-vault-sync" "C:\path\to\github-valut-sync"
+mklink /D "C:\path\to\vault\.obsidian\plugins\git-obsi-sync" "C:\path\to\github-valut-sync"
 
 # macOS / Linux
 ln -s /path/to/github-valut-sync /path/to/vault/.obsidian/plugins/git-obsi-sync
